@@ -18,6 +18,30 @@ export const recomendeddResolution = {
     height: 600,
   },
 };
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function countMatchingPixels(
+  img1: Uint8ClampedArray | number[],
+  img2: Uint8ClampedArray | number[],
+): number {
+  let matchingPixels = 0;
+
+  // We use the length of the shorter array, ensuring we only check complete pixels
+  const length = Math.min(img1.length, img2.length);
+
+  // Increment by 4 to jump to the start of the next pixel
+  for (let i = 0; i < length; i += 4) {
+    const rMatch = img1[i] === img2[i];
+    const gMatch = img1[i + 1] === img2[i + 1];
+    const bMatch = img1[i + 2] === img2[i + 2];
+    const aMatch = img1[i + 3] === img2[i + 3];
+
+    if (rMatch && gMatch && bMatch && aMatch) {
+      matchingPixels++;
+    }
+  }
+
+  return matchingPixels;
+}
 // used to visualise the sorting classes
 export class CanvasSort implements BaseCanvas {
   // the 2d context of the canvas
@@ -28,6 +52,7 @@ export class CanvasSort implements BaseCanvas {
   imBitmap: ImageBitmap | undefined;
   imArray: Uint8ClampedArray | undefined;
   blockSize: number;
+  imWeights: number[] | undefined;
   constructor(ctx: CanvasRenderingContext2D, blockSize: number) {
     this.ctx = ctx;
     this.blockSize = blockSize;
@@ -60,17 +85,73 @@ export class CanvasSort implements BaseCanvas {
     });
 
     this.imArray = this._getImgArray();
+    return this._generateWeights();
     // figure out whre the data starts and ends
   }
   // all this functio  n does is draw the images in the canvas
   async draw() {
     if (this.imBitmap) {
       this.ctx.drawImage(this.imBitmap, 0, 0);
-      console.log(
-        `currHeight : ${this.ctx.getImageData(0, 0, this.imBitmap.width, this.imBitmap.height).height}`,
-      );
     }
     // TODO : do some error reporting or logging
+  }
+  //   probbably a function ill use once when i load the image
+  _generateWeights() {
+    if (this.imArray) {
+      const arrayLen = this.imArray?.length / 4;
+      const weights = Array.from({ length: arrayLen }, (_, i) => i);
+      this.imWeights = weights;
+      return weights;
+    }
+  }
+  //   this function will wnsure that when the array is reset a new bitmap image will be setup to make sure that the correct thing is drawn to the screen
+  async setArray(newArray: Uint8ClampedArray) {
+    if (newArray.length !== this.imArray?.length) {
+      //raise some error
+      // TODO: add a custom error to deal with this mismatch in length
+      return;
+    }
+    // update the bitmap
+    if (this.imBitmap) {
+      const newImageData = new ImageData(newArray, this.imBitmap.width, this.imBitmap.height);
+      this.imBitmap.close();
+      this.imBitmap = await createImageBitmap(newImageData);
+      this.imArray = newArray;
+    }
+  }
+  //   this is the function that will get the new weights pixel data and reorganise the image array
+  async setWeights(newWeights: number[]) {
+    // check that the weights are consistent with the data of our image
+    if (this.imArray && this.imWeights) {
+      // check the indeces are correct
+      if (newWeights.length === this.imWeights.length) {
+        // do this last ??
+        this.imWeights = newWeights;
+        const tmpArray: Uint8ClampedArray = new Uint8ClampedArray(this.imArray.length);
+        // TODO: Im sure there is a better way to do this in the future
+        for (let i = 0; i < newWeights.length; i++) {
+          const newPixelLocation = newWeights[i] * 4;
+          //   this is unceccesary
+          // TODO: remove this and assign directly
+          const currPixelData = Array.of(
+            this.imArray[i],
+            this.imArray[i + 1],
+            this.imArray[i + 2],
+            this.imArray[i + 3],
+          );
+          //   filling out the r g b alpha
+          tmpArray[newPixelLocation] = currPixelData[0];
+          tmpArray[newPixelLocation + 1] = currPixelData[1];
+          tmpArray[newPixelLocation + 2] = currPixelData[2];
+          tmpArray[newPixelLocation + 3] = currPixelData[3];
+        }
+        console.log(`height ${this.imBitmap?.height} : width  ${this.imBitmap?.width}`);
+        console.log(`${tmpArray}`);
+
+        // update the image bitmap
+        await this.setArray(tmpArray);
+      }
+    }
   }
 }
 // used to visualise the sorting classes

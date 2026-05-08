@@ -39,12 +39,24 @@ const getImageData = async (url: string): Promise<Blob> => {
     throw error;
   }
 };
+
+// fisher yates shuffling algorithim
+function shuffle<T>(array: T[]): T[] {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 export default function Sorting(props: SortingPageProps) {
   const [selectedImage, setSelectedImage] = useState<string>("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [logic, setLogic] = useState<BaseSortingLogic>();
   const [imageLoaded, setImageLoaded] = useState<boolean>(false);
   const [data, setData] = useState([]);
+  const [isShuffled, setShuffled] = useState(false);
   const [canvasDim, setCanvasDim] = useState<{ height: number; width: number }>(
     recomendeddResolution.horizontal,
   );
@@ -54,8 +66,8 @@ export default function Sorting(props: SortingPageProps) {
   function getSelectedImage(path: string) {
     // good idea to highlight if there is a selected image
     // TODO: add highlighting to the selected image using the selected image variable
-    console.log(path);
     setSelectedImage(path);
+    setShuffled(false);
     setDialogueOpen(false);
   }
 
@@ -69,7 +81,7 @@ export default function Sorting(props: SortingPageProps) {
     // default to horisontal resolution
     canvas.width = recomendeddResolution.horizontal.width;
     canvas.height = recomendeddResolution.horizontal.height;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
     // initialise  the visualiser
     // ctx.fillStyle = "blue";
@@ -95,13 +107,11 @@ export default function Sorting(props: SortingPageProps) {
               await visualiserRef.current.setImageData(img);
               if (visualiserRef.current.imRes) {
                 if (canvasRef.current.width !== visualiserRef.current.imRes.width) {
-                  console.log(visualiserRef.current.imRes.width);
                   canvasRef.current.height = visualiserRef.current.imRes.height;
                   canvasRef.current.width = visualiserRef.current.imRes.width;
                 }
                 visualiserRef.current.draw();
               }
-              console.log(visualiserRef.current.imArray);
             }
             resolve(img);
           };
@@ -116,6 +126,17 @@ export default function Sorting(props: SortingPageProps) {
     imageData();
   }, [selectedImage]);
 
+  // when shuffled button is pressed and variable updated
+  useEffect(() => {
+    async function scrambleImage() {
+      if (visualiserRef.current?.imWeights) {
+        const shuffledWeights = shuffle(visualiserRef.current.imWeights);
+        await visualiserRef.current.setWeights(shuffledWeights);
+        await visualiserRef.current.draw();
+      }
+    }
+    if (isShuffled == true) scrambleImage();
+  }, [isShuffled]);
   return (
     <>
       <span>Sorting</span>
@@ -144,6 +165,14 @@ export default function Sorting(props: SortingPageProps) {
         <CardContent className="align-center flex gap-4">
           <canvas ref={canvasRef}></canvas>
           <ButtonGroup>
+            <Button
+              variant={"outline"}
+              onClick={() => {
+                setShuffled(true);
+              }}
+            >
+              <span>Shuffle Image</span>
+            </Button>
             <Button variant={"outline"}>
               <span>Next</span>
             </Button>
