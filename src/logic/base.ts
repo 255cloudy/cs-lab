@@ -1,9 +1,9 @@
 export interface BaseSortingLogic {
-    result(): number[]
+  result(): number[];
 }
 export interface BaseSearchinLogic {
-    get(): number[]
+  get(): number[];
 }
 export interface BasePathFindingLogic {
-    path(): number[]
+  path(): number[];
 }

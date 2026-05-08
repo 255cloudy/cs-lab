@@ -1,8 +1,14 @@
-import type{ BaseCanvas } from "@/components/visualisers/Canvases";
+import type { BaseCanvas, CanvasSort } from "@/components/visualisers/Canvases";
 import type { BasePathFindingLogic, BaseSortingLogic, BaseSearchinLogic } from "@/logic/base";
 export interface PageProps {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    visualiser: new (...args: any[]) => BaseCanvas,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    logic: new (...args: any[]) => BaseSortingLogic|BasePathFindingLogic|BaseSearchinLogic,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  visualiser: new (...args: any[]) => BaseCanvas;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  logic: new (...args: any[]) => BaseSortingLogic | BasePathFindingLogic | BaseSearchinLogic;
+}
+export interface SortingPageProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  visualiser: new (...args: any[]) => CanvasSort;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  logic: new (...args: any[]) => BaseSortingLogic;
 }

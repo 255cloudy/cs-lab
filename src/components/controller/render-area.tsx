@@ -1,3 +1,3 @@
-export function RenderArea(){
-    return(<></> )
+export function RenderArea() {
+  return <></>;
 }
