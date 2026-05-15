@@ -128,22 +128,28 @@ export class CanvasSort implements BaseCanvas {
         // do this last ??
         this.imWeights = newWeights;
         const tmpArray: Uint8ClampedArray = new Uint8ClampedArray(this.imArray.length);
+        const src32 = new Uint32Array(this.imArray.buffer);
+        const dest32 = new Uint32Array(tmpArray.buffer);
         // TODO: Im sure there is a better way to do this in the future
         for (let i = 0; i < newWeights.length; i++) {
-          const newPixelLocation = newWeights[i] * 4;
+          // const newPixelLocation = newWeights[i] * 4;
+          // const currPixelLocation = i * 4;
+          const newPxLoc = newWeights[i];
+          const currPxLoc = i;
+          dest32[newPxLoc] = src32[currPxLoc];
           //   this is unceccesary
           // TODO: remove this and assign directly
-          const currPixelData = Array.of(
-            this.imArray[i],
-            this.imArray[i + 1],
-            this.imArray[i + 2],
-            this.imArray[i + 3],
-          );
+          // const currPixelData = Array.of(
+          //   this.imArray[currPixelLocation],
+          //   this.imArray[currPixelLocation + 1],
+          //   this.imArray[currPixelLocation + 2],
+          //   this.imArray[currPixelLocation + 3],
+          // );
           //   filling out the r g b alpha
-          tmpArray[newPixelLocation] = currPixelData[0];
-          tmpArray[newPixelLocation + 1] = currPixelData[1];
-          tmpArray[newPixelLocation + 2] = currPixelData[2];
-          tmpArray[newPixelLocation + 3] = currPixelData[3];
+          // tmpArray[newPixelLocation] = currPixelData[0];
+          // tmpArray[newPixelLocation + 1] = currPixelData[1];
+          // tmpArray[newPixelLocation + 2] = currPixelData[2];
+          // tmpArray[newPixelLocation + 3] = currPixelData[3];
         }
         console.log(`height ${this.imBitmap?.height} : width  ${this.imBitmap?.width}`);
         console.log(`${tmpArray}`);
