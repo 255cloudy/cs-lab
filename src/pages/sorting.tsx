@@ -8,11 +8,13 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 import { recomendeddResolution } from "@/components/visualisers/Canvases";
-import { useRef, useEffect, useState, useLayoutEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import type { SortingPageProps } from "./page_props";
 import { ButtonGroup } from "@/components/ui/button-group";
-import type { BaseCanvas, CanvasSort } from "@/components/visualisers/Canvases";
+import type { CanvasSort } from "@/components/visualisers/Canvases";
 import type { BaseSortingLogic } from "@/logic/base";
 import { ChevronDown } from "lucide-react";
 import { ImageViewer } from "@/components/custom/image_viewer";
@@ -60,6 +62,8 @@ export default function Sorting(props: SortingPageProps) {
   const [canvasDim, setCanvasDim] = useState<{ height: number; width: number }>(
     recomendeddResolution.horizontal,
   );
+  const [boxSize, setBoxSize] = useState([10]);
+  const [stepSize, setStepSize] = useState([20]);
   const [isDialogueOpen, setDialogueOpen] = useState<boolean>(false);
   const visualiserRef = useRef<CanvasSort>(null);
   // callback function to get the selected image from the picker
@@ -162,27 +166,63 @@ export default function Sorting(props: SortingPageProps) {
             </Dialog>
           </CardAction>
         </CardHeader>
-        <CardContent className="align-center flex gap-4">
-          <canvas ref={canvasRef}></canvas>
-          <ButtonGroup>
-            <Button
-              variant={"outline"}
-              onClick={() => {
-                setShuffled(true);
-              }}
-            >
-              <span>Shuffle Image</span>
-            </Button>
-            <Button variant={"outline"}>
-              <span>Next</span>
-            </Button>
-            <Button variant={"outline"}>
-              <span>finish</span>
-            </Button>
-            <Button variant={"outline"}>
-              <span>animate</span>
-            </Button>
-          </ButtonGroup>
+        <CardContent>
+          <div className="flex flex-row gap-3">
+            <div className="m-2">
+              <canvas ref={canvasRef}></canvas>
+            </div>
+            <div className="flex flex-col gap-2">
+              <ButtonGroup className="mt-2 mb-2">
+                <Button
+                  variant={"outline"}
+                  onClick={() => {
+                    setShuffled(true);
+                  }}
+                >
+                  <span>Shuffle Image</span>
+                </Button>
+                <Button variant={"outline"}>
+                  <span>Next</span>
+                </Button>
+                <Button variant={"outline"}>
+                  <span>finish</span>
+                </Button>
+                <Button variant={"outline"}>
+                  <span>animate</span>
+                </Button>
+              </ButtonGroup>
+              <div className="mx-auto grid w-full max-w-xs gap-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="slider-demo-temperature">Box size</Label>
+                  <span className="text-sm text-muted-foreground">{boxSize[0]}</span>
+                </div>
+                <Slider
+                  id="slider-demo-temperature"
+                  defaultValue={[10]}
+                  value={boxSize}
+                  onValueChange={setBoxSize}
+                  min={10}
+                  max={100}
+                  step={10}
+                />
+              </div>
+              <div className="mx-auto grid w-full max-w-xs gap-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="slider-step">Step size</Label>
+                  <span className="text-sm text-muted-foreground">{stepSize[0]}</span>
+                </div>
+                <Slider
+                  id="slider-step"
+                  defaultValue={[20]}
+                  value={stepSize}
+                  onValueChange={setStepSize}
+                  min={20}
+                  max={200}
+                  step={10}
+                />
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </>
