@@ -16,6 +16,7 @@ import type { SortingPageProps } from "./page_props";
 import { ButtonGroup } from "@/components/ui/button-group";
 import type { CanvasSort } from "@/components/visualisers/Canvases";
 import type { BaseSortingLogic } from "@/logic/base";
+import { InsertionSort } from "@/logic/sorting";
 import { ChevronDown } from "lucide-react";
 import { ImageViewer } from "@/components/custom/image_viewer";
 import {
@@ -25,7 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
+const randImageUrl = "http://localhost:3000/api/random-image";
 const getImageData = async (url: string): Promise<Blob> => {
   try {
     const response = await axios.get<Blob>(url, {
@@ -66,6 +67,7 @@ export default function Sorting(props: SortingPageProps) {
   const [stepSize, setStepSize] = useState([20]);
   const [isDialogueOpen, setDialogueOpen] = useState<boolean>(false);
   const visualiserRef = useRef<CanvasSort>(null);
+  const logicRef = useRef<InsertionSort>(null);
   // callback function to get the selected image from the picker
   function getSelectedImage(path: string) {
     // good idea to highlight if there is a selected image
@@ -75,11 +77,53 @@ export default function Sorting(props: SortingPageProps) {
     setDialogueOpen(false);
   }
 
+  function sortImageFull() {
+    if (logicRef.current && visualiserRef.current) {
+      logicRef.current.sort(0);
+      visualiserRef.current.setWeights(logicRef.current.data);
+      visualiserRef.current.draw();
+    }
+  }
+  async function imageData(selectedImageUrl: string) {
+    const data = await getImageData(selectedImageUrl);
+    const img = new Image();
+    const objectURL = URL.createObjectURL(data);
+    try {
+      await new Promise((resolve, reject) => {
+        img.src = objectURL;
+        img.onload = async () => {
+          if (visualiserRef.current && canvasRef.current) {
+            const weigts = await visualiserRef.current.setImageData(img);
+            if (!logicRef.current) {
+              logicRef.current = new props.logic(weigts);
+            } else if (weigts) logicRef.current.reset(weigts);
+            if (visualiserRef.current.imRes) {
+              if (canvasRef.current.width !== visualiserRef.current.imRes.width) {
+                canvasRef.current.height = visualiserRef.current.imRes.height;
+                canvasRef.current.width = visualiserRef.current.imRes.width;
+              }
+              await visualiserRef.current.draw();
+            }
+          }
+          resolve(img);
+        };
+        img.onerror = reject;
+      });
+    } catch (e) {
+      console.error("Decoding failed", e);
+    } finally {
+      URL.revokeObjectURL(objectURL); // Always clean up memory
+    }
+  }
+
   // this effect is for when this component loads
   // supposed to load up visualiser and the sorting utils with data
   useEffect(() => {
     // initialise canvas
     const canvas = canvasRef.current;
+    async function getInitialImage() {
+      await imageData(randImageUrl);
+    }
     // TODO: get some sort of error or loggimg message here
     if (!canvas) return;
     // default to horisontal resolution
@@ -87,11 +131,9 @@ export default function Sorting(props: SortingPageProps) {
     canvas.height = recomendeddResolution.horizontal.height;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
-    // initialise  the visualiser
-    // ctx.fillStyle = "blue";
-    // ctx.fillRect(0, 0, canvas.width, canvas.height);
-    if (!visualiserRef.current) {
+    if (!visualiserRef.current && !logicRef.current) {
       visualiserRef.current = new props.visualiser(ctx);
+      getInitialImage();
     }
     // const tmpLogic = new props.logic([])
     // prepare the data
@@ -99,35 +141,10 @@ export default function Sorting(props: SortingPageProps) {
 
   // when selected image changes
   useEffect(() => {
-    async function imageData() {
-      const data = await getImageData(selectedImage);
-      const img = new Image();
-      const objectURL = URL.createObjectURL(data);
-      try {
-        await new Promise((resolve, reject) => {
-          img.src = objectURL;
-          img.onload = async () => {
-            if (visualiserRef.current && canvasRef.current) {
-              await visualiserRef.current.setImageData(img);
-              if (visualiserRef.current.imRes) {
-                if (canvasRef.current.width !== visualiserRef.current.imRes.width) {
-                  canvasRef.current.height = visualiserRef.current.imRes.height;
-                  canvasRef.current.width = visualiserRef.current.imRes.width;
-                }
-                visualiserRef.current.draw();
-              }
-            }
-            resolve(img);
-          };
-          img.onerror = reject;
-        });
-      } catch (e) {
-        console.error("Decoding failed", e);
-      } finally {
-        URL.revokeObjectURL(objectURL); // Always clean up memory
-      }
+    async function updateImage() {
+      await imageData(selectedImage);
     }
-    imageData();
+    updateImage();
   }, [selectedImage]);
 
   // when shuffled button is pressed and variable updated
@@ -184,7 +201,7 @@ export default function Sorting(props: SortingPageProps) {
                 <Button variant={"outline"}>
                   <span>Next</span>
                 </Button>
-                <Button variant={"outline"}>
+                <Button variant={"outline"} onClick={sortImageFull}>
                   <span>finish</span>
                 </Button>
                 <Button variant={"outline"}>

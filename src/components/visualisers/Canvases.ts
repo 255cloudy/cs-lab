@@ -151,7 +151,7 @@ export class CanvasSort implements BaseCanvas {
           // tmpArray[newPixelLocation + 2] = currPixelData[2];
           // tmpArray[newPixelLocation + 3] = currPixelData[3];
         }
-        console.log(`height ${this.imBitmap?.height} : width  ${this.imBitmap?.width}`);
+        // console.log(`height ${this.imBitmap?.height} : width  ${this.imBitmap?.width}`);
         console.log(`${tmpArray}`);
 
         // update the image bitmap
