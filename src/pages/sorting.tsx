@@ -77,11 +77,13 @@ export default function Sorting(props: SortingPageProps) {
     setDialogueOpen(false);
   }
 
-  function sortImageFull() {
+  async function sortImageFull() {
     if (logicRef.current && visualiserRef.current) {
       logicRef.current.sort(0);
       visualiserRef.current.setWeights(logicRef.current.data);
-      visualiserRef.current.draw();
+      requestAnimationFrame(async () => {
+        if (visualiserRef.current) await visualiserRef.current.draw();
+      });
     }
   }
   async function imageData(selectedImageUrl: string) {

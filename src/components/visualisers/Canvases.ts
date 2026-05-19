@@ -91,6 +91,7 @@ export class CanvasSort implements BaseCanvas {
   // all this functio  n does is draw the images in the canvas
   async draw() {
     if (this.imBitmap) {
+      console.log("bitmap ok ");
       this.ctx.drawImage(this.imBitmap, 0, 0);
     }
     // TODO : do some error reporting or logging
@@ -109,12 +110,12 @@ export class CanvasSort implements BaseCanvas {
     if (newArray.length !== this.imArray?.length) {
       //raise some error
       // TODO: add a custom error to deal with this mismatch in length
+      console.error("array provided incompatible");
       return;
     }
     // update the bitmap
     if (this.imBitmap) {
       const newImageData = new ImageData(newArray, this.imBitmap.width, this.imBitmap.height);
-      this.imBitmap.close();
       this.imBitmap = await createImageBitmap(newImageData);
       this.imArray = newArray;
     }
@@ -125,36 +126,17 @@ export class CanvasSort implements BaseCanvas {
     if (this.imArray && this.imWeights) {
       // check the indeces are correct
       if (newWeights.length === this.imWeights.length) {
-        // do this last ??
-        this.imWeights = newWeights;
         const tmpArray: Uint8ClampedArray = new Uint8ClampedArray(this.imArray.length);
         const src32 = new Uint32Array(this.imArray.buffer);
         const dest32 = new Uint32Array(tmpArray.buffer);
-        // TODO: Im sure there is a better way to do this in the future
         for (let i = 0; i < newWeights.length; i++) {
-          // const newPixelLocation = newWeights[i] * 4;
-          // const currPixelLocation = i * 4;
           const newPxLoc = newWeights[i];
-          const currPxLoc = i;
+          const currPxLoc = this.imWeights[i];
           dest32[newPxLoc] = src32[currPxLoc];
-          //   this is unceccesary
-          // TODO: remove this and assign directly
-          // const currPixelData = Array.of(
-          //   this.imArray[currPixelLocation],
-          //   this.imArray[currPixelLocation + 1],
-          //   this.imArray[currPixelLocation + 2],
-          //   this.imArray[currPixelLocation + 3],
-          // );
-          //   filling out the r g b alpha
-          // tmpArray[newPixelLocation] = currPixelData[0];
-          // tmpArray[newPixelLocation + 1] = currPixelData[1];
-          // tmpArray[newPixelLocation + 2] = currPixelData[2];
-          // tmpArray[newPixelLocation + 3] = currPixelData[3];
+          // console.log(`shifted ${newPxLoc} from ${currPxLoc}`);
         }
-        // console.log(`height ${this.imBitmap?.height} : width  ${this.imBitmap?.width}`);
-        console.log(`${tmpArray}`);
-
-        // update the image bitmap
+        // do this last ??
+        this.imWeights = newWeights;
         await this.setArray(tmpArray);
       }
     }
